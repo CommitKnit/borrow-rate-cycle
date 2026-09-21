@@ -1,0 +1,269 @@
+{
+  "borrow_panel": {
+    "SBICARD": {
+      "rows": 11569,
+      "cols": 52,
+      "cycles": 20,
+      "start": "2024-07-03 15:00:00+05:30",
+      "end": "2026-06-10 15:15:00+05:30",
+      "bytes": 3157982,
+      "sha256": "8b4c3feac55f409eeba17a33bee58d600a48cfec62c25a8580acddc4e8c0736b"
+    },
+    "RVNL": {
+      "rows": 6329,
+      "cols": 52,
+      "cycles": 13,
+      "start": "2025-06-02 09:15:00+05:30",
+      "end": "2026-06-10 15:15:00+05:30",
+      "bytes": 2021865,
+      "sha256": "462001a7f1617d22b647363399c6949ae9a35d8a57b4a88cb7bd86bafa57cab3"
+    },
+    "KPITTECH": {
+      "rows": 9426,
+      "cols": 52,
+      "cycles": 18,
+      "start": "2024-11-29 09:45:00+05:30",
+      "end": "2026-06-10 15:15:00+05:30",
+      "bytes": 2565164,
+      "sha256": "1d5e68b6d7a2bc60f56d6cf7a672f77cf52ce125f192a6bb66d73befbbfd9be0"
+    },
+    "ASTRAL": {
+      "rows": 12515,
+      "cols": 52,
+      "cycles": 22,
+      "start": "2024-08-01 13:00:00+05:30",
+      "end": "2026-08-12 15:30:00+05:30",
+      "bytes": 3038217,
+      "sha256": "6f507b51f99dc60caaca9fa47da9eda541127da3ece8d7c9f940ec6d2c31828f"
+    },
+    "BDL": {
+      "rows": 7437,
+      "cols": 24,
+      "cycles": 15,
+      "start": "2025-06-02 09:15:00+05:30",
+      "end": "2026-08-12 15:30:00+05:30",
+      "bytes": 672319,
+      "sha256": "1958e65807c8dbc62bf137d2a5324333829d5e570e9fb86eafc339964d053093"
+    },
+    "IREDA": {
+      "rows": 8937,
+      "cols": 52,
+      "cycles": 19,
+      "start": "2025-02-28 09:15:00+05:30",
+      "end": "2026-08-12 15:30:00+05:30",
+      "bytes": 2692595,
+      "sha256": "ca9a75dc5be5a9c7ce294bb0ef38cab36580eca76081d12d1a3ba44e09318a06"
+    },
+    "VOLTAS": {
+      "rows": 11625,
+      "cols": 52,
+      "cycles": 20,
+      "start": "2024-07-03 15:15:00+05:30",
+      "end": "2026-06-10 15:15:00+05:30",
+      "bytes": 3092196,
+      "sha256": "0dab9a03f10ba20ed7a083e77e3ca67af331872aa780e11dd4a905ac83e828ef"
+    }
+  },
+  "options_atm": {
+    "SBICARD_2024-10-31": {
+      "rows": 9996,
+      "strike_step": 5.0,
+      "bytes": 335356,
+      "sha256": "96f79f83c668d44a5fe0bb6a7f81a91249f904350ed52c5aece8950aeedb4667"
+    },
+    "SBICARD_2024-11-28": {
+      "rows": 7298,
+      "strike_step": 5.0,
+      "bytes": 243665,
+      "sha256": "bffb751f80cb979ff7eba90a39ae2159bde656e5de773ded52df91452c6b3499"
+    },
+    "SBICARD_2025-01-30": {
+      "rows": 9222,
+      "strike_step": 5.0,
+      "bytes": 309790,
+      "sha256": "8eb93f5fe65528565184edcd1a34c2ef5cfe07f8a1bf2e28c17ed4c9df70b3f0"
+    },
+    "SBICARD_2025-02-27": {
+      "rows": 7604,
+      "strike_step": 5.0,
+      "bytes": 252546,
+      "sha256": "79ba736f3de5775e9442a1cb5eebb1e5040d8d51157f6fdf92d8172fb8a05f71"
+    },
+    "SBICARD_2025-03-27": {
+      "rows": 1822,
+      "strike_step": 20.0,
+      "bytes": 69360,
+      "sha256": "fde03bb993520d68439d294df8d15bba2b35eefc8cd906cb1efeccfe41a70c72"
+    },
+    "SBICARD_2025-04-24": {
+      "rows": 5548,
+      "strike_step": 5.0,
+      "bytes": 192833,
+      "sha256": "66d2bfa4eac889f7c42545733ed2db3fc1a3d3e37e23778ccd56e57549fc2382"
+    },
+    "SBICARD_2025-05-29": {
+      "rows": 8399,
+      "strike_step": 10.0,
+      "bytes": 278923,
+      "sha256": "2a8dd997c6748bb858dee05592b2f671d9f728d209dc28b702ebd48ee4e08ff2"
+    },
+    "SBICARD_2025-06-26": {
+      "rows": 7176,
+      "strike_step": 10.0,
+      "bytes": 239700,
+      "sha256": "8f45ad5e0234d6515b1e00eb0d44e1798d52b0435953e96292495187d6c1c5ca"
+    },
+    "SBICARD_2025-07-31": {
+      "rows": 9114,
+      "strike_step": 10.0,
+      "bytes": 311776,
+      "sha256": "9b9d0e714f66c6e72d2b6da8943e31b7ff92fee4956998dd2ff09ab614c69ec1"
+    },
+    "SBICARD_2025-08-28": {
+      "rows": 7052,
+      "strike_step": 10.0,
+      "bytes": 238305,
+      "sha256": "b128da0ebe94bf2f5ae3fd2187aa3161d588ab95a6407eb278f8764ce872f1e2"
+    },
+    "SBICARD_2025-09-30": {
+      "rows": 8680,
+      "strike_step": 10.0,
+      "bytes": 292201,
+      "sha256": "dbc9b69211f1c0d8a72d3a5626fd899b8fd8b73aed7fd2f523984091e34366a6"
+    },
+    "SBICARD_2025-10-28": {
+      "rows": 6757,
+      "strike_step": 10.0,
+      "bytes": 231687,
+      "sha256": "dd7903e848844518a68ca38dfd80c4fca3711c4f221587e95270ef40b5318905"
+    },
+    "SBICARD_2025-11-25": {
+      "rows": 7806,
+      "strike_step": 10.0,
+      "bytes": 262834,
+      "sha256": "bb4aee81cf984c8468cec633075c8ac4f4c00b4b6d1e83331c691da2dadf5dcf"
+    },
+    "SBICARD_2025-12-30": {
+      "rows": 9534,
+      "strike_step": 10.0,
+      "bytes": 318493,
+      "sha256": "49d7a168fd726d4ad058dbdcda92da9cb2d271d99104141981060a424afc4b7c"
+    },
+    "SBICARD_2026-01-27": {
+      "rows": 8103,
+      "strike_step": 10.0,
+      "bytes": 268655,
+      "sha256": "6eefe6ded138b9239e8c00a8346cf868753ad4a93319bf5ec2f644a3769fcb58"
+    },
+    "SBICARD_2026-02-24": {
+      "rows": 8110,
+      "strike_step": 10.0,
+      "bytes": 275669,
+      "sha256": "d503fe005a81d2b997251ed5b9bdb4c5f48dbaa5eefe2a250668b17729a30a78"
+    },
+    "SBICARD_2026-03-30": {
+      "rows": 9278,
+      "strike_step": 10.0,
+      "bytes": 314025,
+      "sha256": "3aeb1199356effe76317b98a049f35f0c4739a83e5238e9dd26b6d37b69d8563"
+    },
+    "SBICARD_2026-04-28": {
+      "rows": 7803,
+      "strike_step": 10.0,
+      "bytes": 265501,
+      "sha256": "ba2d3ce5926ff03cc0f871e23dd725c3f573e52e9bc2e8b6776337db20d4e6e6"
+    },
+    "SBICARD_2026-05-26": {
+      "rows": 7783,
+      "strike_step": 10.0,
+      "bytes": 261586,
+      "sha256": "8b3cf82734354e2a8fe4752ba8adf6a48f5137305d9895b1be4a29900a82bcf6"
+    },
+    "SBICARD_2026-06-30": {
+      "rows": 5076,
+      "strike_step": 20.0,
+      "bytes": 181947,
+      "sha256": "67de5af0262a62f116b961da925d461884be5a749da21b2a3ff9cb1d52b55b75"
+    },
+    "RVNL_2025-06-26": {
+      "rows": 5225,
+      "strike_step": 10.0,
+      "bytes": 177231,
+      "sha256": "9cf155ea36f1cefcbf8c4d8a43d0ef7e9f53110b5076a7cb8deaf181fe382ec6"
+    },
+    "RVNL_2025-07-31": {
+      "rows": 9507,
+      "strike_step": 10.0,
+      "bytes": 315978,
+      "sha256": "630483717710f1708f9c0c89116d42563c2628349a50cfed746eb75090f04bfc"
+    },
+    "RVNL_2025-08-28": {
+      "rows": 7207,
+      "strike_step": 10.0,
+      "bytes": 240067,
+      "sha256": "3f709308baee6b0279788b52bab9b40eb1f52672ae1405d4d6ccfdd6f62e3e6b"
+    },
+    "RVNL_2025-09-30": {
+      "rows": 8561,
+      "strike_step": 10.0,
+      "bytes": 288530,
+      "sha256": "202288c83352a1a20276538cc996419f9a9be07a9e3586d61e3fb9379911ca31"
+    },
+    "RVNL_2025-10-28": {
+      "rows": 7252,
+      "strike_step": 5.0,
+      "bytes": 242891,
+      "sha256": "6b3419609223e09942b1bb21343018dc1d9591d67e3bd7d153a2a438f2d07ad2"
+    },
+    "RVNL_2025-11-25": {
+      "rows": 8067,
+      "strike_step": 5.0,
+      "bytes": 270600,
+      "sha256": "132c4a9968009148b2dd42fa3ad36ef7917367709200e9c3cf2e567662f3dc90"
+    },
+    "RVNL_2025-12-30": {
+      "rows": 10061,
+      "strike_step": 5.0,
+      "bytes": 342252,
+      "sha256": "41fa6b36de12456f6213cceb07db76ffe5743bb681d208186c4dd74d67267210"
+    },
+    "RVNL_2026-01-27": {
+      "rows": 9308,
+      "strike_step": 5.0,
+      "bytes": 320086,
+      "sha256": "45a767102944c8427aa523cef187ca180d5eba32e0166be9265e017e6a322a1a"
+    },
+    "RVNL_2026-02-24": {
+      "rows": 9572,
+      "strike_step": 5.0,
+      "bytes": 331141,
+      "sha256": "de2300539675dcf398eeb6a6f1a2e505c42bd07c63addb17508eae676bf16658"
+    },
+    "RVNL_2026-03-30": {
+      "rows": 8758,
+      "strike_step": 5.0,
+      "bytes": 301041,
+      "sha256": "58143dd4047dada9488554ce576cb46ec87290acc7b7ea98bfb6b842a8de70d0"
+    },
+    "RVNL_2026-04-28": {
+      "rows": 8085,
+      "strike_step": 5.0,
+      "bytes": 284420,
+      "sha256": "c2b9c8fc8e7a84528ee0d2e16dfd9cfc05b9bacb131ac44a77d67bdf12f5944f"
+    },
+    "RVNL_2026-05-26": {
+      "rows": 5630,
+      "strike_step": 5.0,
+      "bytes": 184352,
+      "sha256": "a729407803778c7ca60c2349d216b8cf1de0fa8d8d5951aee8df8816d8338bbe"
+    },
+    "RVNL_2026-06-30": {
+      "rows": 3742,
+      "strike_step": 10.0,
+      "bytes": 130597,
+      "sha256": "2813e013e5bd71316718087f21b85cf571b2aac715281a46b25bd125f7b4ca42"
+    }
+  },
+  "total_bytes": 25814376,
+  "generated_by": "scripts/00_export_data.py"
+}
