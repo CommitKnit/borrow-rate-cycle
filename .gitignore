@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.ipynb_checkpoints/
+recovered/_source_backup.bundle
