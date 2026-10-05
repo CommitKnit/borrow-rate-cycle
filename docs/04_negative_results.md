@@ -45,11 +45,11 @@ Cycles whose borrow premium never exceeds 5% annualised are a natural control gr
 
 | Tier | n | Win rate | Mean bps |
 |---|---|---|---|
-| NON | 12 | 0% | -36.9 |
+| NON | 13 | 0% | -37.8 |
 | MOD | 28 | 61% | +10.3 |
-| EXT | 67 | 78% | +82.6 |
+| EXT | 72 | 78% | +83.2 |
 
-In the 12 control cycles the strategy wins 0% of the time and loses an average of 37 bps. That is the correct outcome: the trade is a bet on a specific mechanism and should not pay when the mechanism is absent. With n=12 this is a consistency check, not a statistical test.
+In the 13 control cycles the strategy wins 0% of the time and loses an average of 38 bps. That is the correct outcome: the trade is a bet on a specific mechanism and should not pay when the mechanism is absent. With n=13 this is a consistency check, not a statistical test.
 
 
 ## 3. What this rules out
