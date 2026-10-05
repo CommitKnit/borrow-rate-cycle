@@ -1,29 +1,32 @@
 """
-Local data access — replaces the ArcticDB layer of the source research repo.
+Data access for the analysis scripts — reads the backtesting engine's ArcticDB.
 
-Everything this package needs ships inside data/. There is no database
-dependency: `load_panel` reads a parquet file and restores the tz-aware
-Asia/Kolkata index that the signal code relies on.
+All market data lives in the engine store (see borrowcycle/pipeline/config.py and
+pipeline/README.md); nothing is copied into this repository. ``load_panel`` returns
+the joined 15-minute borrow panel: the computed borrow columns (b1..b13, dte_star,
+features) plus the futures-panel inputs (F1-F3 close/OI/DTE, cycle_id, is_expiry_day)
+and Kite spot, joined on timestamp at read time.
 """
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterator
 
+import numpy as np
 import pandas as pd
 
-PKG_ROOT  = Path(__file__).resolve().parent.parent
-PANEL_DIR = PKG_ROOT / "data" / "borrow_panel"
-OPT_DIR   = PKG_ROOT / "data" / "options_atm"
+PKG_ROOT = Path(__file__).resolve().parent.parent
 
 INTERVAL = "15minute"
 TZ       = "Asia/Kolkata"
 
-#: All tickers shipped with the repo.
+#: The seven names the research covers.
 TICKERS = ["SBICARD", "RVNL", "KPITTECH", "ASTRAL", "BDL", "IREDA", "VOLTAS"]
 
-#: Tickers for which an ATM options extract is shipped (S2/S3 are only
-#: computable for these).
+#: Tickers the options strategies (S2/S3) are evaluated on. Enriched chains exist
+#: for all seven at 15minute, but lot sizes are only known for these two, and the
+#: published options results are scoped to them.
 OPTION_TICKERS = ["SBICARD", "RVNL"]
 
 #: NSE lot sizes. Only these two are known from the source research; the
@@ -35,9 +38,15 @@ LOT_SIZES = {"SBICARD": 800, "RVNL": 1525}
 #: 15-minute bars in one NSE equity session (09:15-15:30 = 375 minutes).
 BARS_PER_DAY = 25
 
+#: Option columns the backtest reads, and strikes kept either side of the money
+#: (the backtest only ever selects the single ATM strike).
+OPT_COLS = ["strike", "opt_type", "close", "iv", "delta", "vega",
+            "dte", "futures_ref_price", "expiry", "oi", "volume"]
+STRIKE_PAD = 3
+
 
 class OptionsUnavailable(FileNotFoundError):
-    """Raised when an option chain is not shipped for a ticker/expiry.
+    """Raised when no option chain is stored for a ticker/expiry.
 
     Callers must degrade the options strategies to NaN and *keep* the
     futures-only result. Silently skipping the whole cycle is the selection
@@ -45,29 +54,42 @@ class OptionsUnavailable(FileNotFoundError):
     """
 
 
+class StoreUnavailable(RuntimeError):
+    """The engine ArcticDB store (or the arcticdb package) is not available."""
+
+
+@lru_cache(maxsize=1)
+def store():
+    from .pipeline import config as cfg
+    try:
+        from .pipeline.store import Store
+    except ImportError as exc:                       # arcticdb not installed
+        raise StoreUnavailable(f"arcticdb is required to read the data: {exc}") from exc
+    if not cfg.MAIN_DIR.exists() or not cfg.SPOT_DIR.exists():
+        raise StoreUnavailable(
+            f"Engine ArcticDB store not found under {cfg.ENGINE_ROOT}. Set BORROWCYCLE_ENGINE_ROOT, "
+            "or build the data with the pipeline (see pipeline/README.md).")
+    return Store()
+
+
 def available_tickers() -> list[str]:
-    return sorted(p.stem for p in PANEL_DIR.glob("*.parquet"))
+    return sorted({s.split("/")[0] for s in store().symbols("borrow_rates") if s.endswith(f"/{INTERVAL}")})
 
 
 def load_panel(ticker: str, columns: list[str] | None = None) -> pd.DataFrame:
-    """Load one ticker's 15-minute futures/borrow panel.
+    """Load one ticker's joined 15-minute futures/borrow panel.
 
     Returns a frame with a tz-aware (Asia/Kolkata), monotonically increasing
-    DatetimeIndex. The tz is restored explicitly: the exit rule compares
-    against a tz-localised noon timestamp and would mis-time silently if the
-    index came back naive.
+    DatetimeIndex. The exit rule compares against a tz-localised noon timestamp
+    and would mis-time silently if the index came back naive.
     """
-    path = PANEL_DIR / f"{ticker}.parquet"
-    if not path.exists():
-        raise FileNotFoundError(
-            f"No panel for {ticker!r} at {path}. Available: {available_tickers()}"
-        )
-    df = pd.read_parquet(path, columns=columns)
-    if not isinstance(df.index, pd.DatetimeIndex):
-        raise TypeError(f"{ticker}: expected a DatetimeIndex, got {type(df.index)}")
-    df.index = (
-        df.index.tz_localize(TZ) if df.index.tz is None else df.index.tz_convert(TZ)
-    )
+    df = store().read_borrow(ticker, INTERVAL)
+    if df.empty:
+        raise FileNotFoundError(f"No borrow_rates/{ticker}/{INTERVAL} in the store. "
+                                f"Available: {available_tickers()}")
+    if columns is not None:
+        df = df[[c for c in columns if c in df.columns]]
+    df.index = df.index.tz_convert(TZ)
     df = df.sort_index()
     assert df.index.is_monotonic_increasing, f"{ticker}: non-monotonic index"
     return df
@@ -83,21 +105,25 @@ def iter_cycles(ticker: str, min_bars: int = 40) -> Iterator[tuple[int, pd.DataF
 
 
 def list_option_expiries(ticker: str) -> list[str]:
-    """Expiry dates (ISO strings) for which an ATM option extract is shipped."""
-    return sorted(p.stem.split("_", 1)[1] for p in OPT_DIR.glob(f"{ticker}_*.parquet"))
+    """Expiry dates (ISO strings) with an enriched option chain in the store."""
+    return store().option_expiries(ticker, INTERVAL)
 
 
 def load_options(ticker: str, expiry: str) -> pd.DataFrame:
-    """Load the ATM+/-3-strike option chain for one expiry.
+    """The ATM +/- 3-strike option chain for one expiry.
 
-    Raises OptionsUnavailable when the extract is absent — callers must handle
+    Raises OptionsUnavailable when the chain is absent — callers must handle
     it explicitly rather than dropping the cycle.
     """
-    path = OPT_DIR / f"{ticker}_{expiry}.parquet"
-    if not path.exists():
-        raise OptionsUnavailable(f"No option extract for {ticker} {expiry} at {path}")
-    df = pd.read_parquet(path)
-    df.index = (
-        df.index.tz_localize(TZ) if df.index.tz is None else df.index.tz_convert(TZ)
-    )
-    return df.sort_index()
+    o = store().read_options(ticker, INTERVAL, expiry)
+    if o.empty or "strike" not in o.columns:
+        raise OptionsUnavailable(f"No option chain for {ticker} {expiry}")
+    strikes = np.sort(o["strike"].dropna().unique())
+    step = float(np.median(np.diff(strikes))) if len(strikes) > 1 else 0.0
+    if step > 0 and "futures_ref_price" in o.columns:
+        o = o[(o["strike"] - o["futures_ref_price"]).abs() <= STRIKE_PAD * step]
+    o = o[[c for c in OPT_COLS if c in o.columns]]
+    if o.empty:
+        raise OptionsUnavailable(f"Option chain for {ticker} {expiry} has no near-the-money rows")
+    o.index = o.index.tz_convert(TZ)
+    return o.sort_index()

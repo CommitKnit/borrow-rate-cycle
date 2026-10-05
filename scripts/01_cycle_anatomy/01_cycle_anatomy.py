@@ -119,10 +119,9 @@ def build_records() -> tuple[pd.DataFrame, dict]:
                 "f2_oi_peak": _at(cyc, "F2_oi", m.i_peak),
                 "oi_peak_leads_spread_peak": oi_peak_leads,
                 "lead_bars": lead_bars,
-                # features at the peak (absent for BDL)
+                # features at the peak
                 "atm_iv_peak": _at(cyc, "feat_atm_iv", m.i_peak),
                 "rr25_peak": _at(cyc, "feat_25d_risk_reversal", m.i_peak),
-                "roll_fraction_peak": _at(cyc, "feat_roll_fraction", m.i_peak),
                 # flags
                 "build_censored": m.build_censored,
                 "build_confirmed": m.build_confirmed,
@@ -399,8 +398,9 @@ def main() -> int:
              f"the expiry week and are flagged `gap_flag`.")
     L.append(f"- {int(df['build_censored'].sum())} cycles have a censored build "
              f"trough.")
-    L.append("- BDL ships without the `feat_*` columns, so it contributes to the "
-             "spread and open-interest statistics but not the IV ones.")
+    L.append("- IV features are NaN on cycles whose front-month expiry has no "
+             "enriched option chain; those cycles still count in the spread and "
+             "open-interest statistics.")
 
     (RESULTS / "anatomy_summary.md").write_text("\n".join(L), encoding="utf-8")
 

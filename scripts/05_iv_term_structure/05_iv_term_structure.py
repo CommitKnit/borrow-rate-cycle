@@ -7,8 +7,8 @@ surface of the same name: front-month implied volatility and the 25-delta
 risk reversal (put skew) should behave differently when the borrow premium is
 extreme than when it is absent.
 
-Uses the ``feat_*`` columns in the shipped panel, so it needs no option files.
-BDL has no feature columns and is excluded automatically.
+Uses the ``feat_*`` columns of the borrow panel, so it reads no option chains
+directly. Cycles without an option-derived feature value are excluded.
 
 Outputs
 -------
@@ -48,7 +48,7 @@ def main() -> int:
     L = ["# What the options surface does during a borrow cycle\n"]
     L.append(f"Measured at each cycle's spread peak, across "
              f"{len(have_iv)} cycles with option-derived features "
-             f"({mom['ticker'].nunique() - 1} tickers; BDL ships without them).\n")
+             f"({have_iv['ticker'].nunique()} tickers).\n")
 
     L.append("\n## 1. Front-month implied vol and skew at the spread peak\n")
     L.append("| Tier | n | median ATM IV | median 25d risk reversal |")
