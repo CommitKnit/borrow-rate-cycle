@@ -5,3 +5,5 @@ __pycache__/
 .ipynb_checkpoints/
 recovered/_source_backup.bundle
 .env
+data_cache/
+figures/appendix/

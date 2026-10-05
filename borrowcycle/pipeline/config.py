@@ -9,8 +9,20 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-ENGINE_ROOT = Path(os.environ.get(
-    "BORROWCYCLE_ENGINE_ROOT", r"C:\Users\risha\backtesting-engine\backtesting-engine"))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _engine_root() -> Path:
+    """BORROWCYCLE_ENGINE_ROOT if set; else a sibling backtesting-engine checkout;
+    else this repo, so a fresh clone builds its own store under ./data_cache."""
+    env = os.environ.get("BORROWCYCLE_ENGINE_ROOT")
+    if env:
+        return Path(env)
+    sibling = REPO_ROOT.parent / "backtesting-engine" / "backtesting-engine"
+    return sibling if (sibling / "data_cache").exists() else REPO_ROOT
+
+
+ENGINE_ROOT = _engine_root()
 MAIN_DIR = ENGINE_ROOT / "data_cache" / "arcticdb"
 SPOT_DIR = ENGINE_ROOT / "data_cache" / "arcticdb_spot"
 MAIN_URI = f"lmdb://{MAIN_DIR.resolve()}"

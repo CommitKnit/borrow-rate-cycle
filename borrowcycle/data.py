@@ -67,8 +67,8 @@ def store():
         raise StoreUnavailable(f"arcticdb is required to read the data: {exc}") from exc
     if not cfg.MAIN_DIR.exists() or not cfg.SPOT_DIR.exists():
         raise StoreUnavailable(
-            f"Engine ArcticDB store not found under {cfg.ENGINE_ROOT}. Set BORROWCYCLE_ENGINE_ROOT, "
-            "or build the data with the pipeline (see pipeline/README.md).")
+            f"ArcticDB store not found under {cfg.ENGINE_ROOT / 'data_cache'}. Build it with the "
+            "pipeline (see pipeline/README.md), or set BORROWCYCLE_ENGINE_ROOT to an existing store.")
     return Store()
 
 

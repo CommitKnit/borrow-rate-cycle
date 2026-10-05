@@ -70,7 +70,7 @@ pip install -e .
 
 | Variable | Needed for |
 |---|---|
-| `BORROWCYCLE_ENGINE_ROOT` | path to the backtesting-engine checkout (default `C:\Users\risha\backtesting-engine\backtesting-engine`) |
+| `BORROWCYCLE_ENGINE_ROOT` | folder whose `data_cache/` holds the store. Default: a sibling `../backtesting-engine/backtesting-engine` checkout if one exists, otherwise this repo (a fresh clone builds its store in `./data_cache/`, which is git-ignored) |
 | `UPSTOX_ACCESS_TOKEN` | fetching futures contracts |
 | `KITE_API_KEY`, `KITE_ACCESS_TOKEN` | fetching spot that is not in the store yet |
 
