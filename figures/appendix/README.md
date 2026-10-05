@@ -5,7 +5,7 @@ working record: several are superseded by the regenerated figures in
 `figures/`, and they do not share a common style. Kept because they show the
 path the research actually took.
 
-The figures in `figures/01…13` are the ones the write-up relies on.
+The figures in `figures/00…17` are the ones the write-up relies on.
 
 | Directory | Files | What it shows | Original script |
 |---|---|---|---|

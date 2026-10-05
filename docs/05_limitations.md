@@ -5,8 +5,8 @@ Read this before using any number in this repository.
 The headline that started this work was *"100% win rate over 22 cycles,
 Sharpe 1.83."* That number is in the repository, it reproduces exactly, and it
 is wrong in four separate ways. Each is documented below with the size of its
-effect. The corrected result — 107 cycles, 64.5% win rate, +50 bps mean,
-per-cycle Sharpe 0.49 — is weaker and is the one to use.
+effect. The corrected result — 113 cycles, 64.6% win rate, +51 bps mean,
+per-cycle Sharpe 0.50 — is weaker and is the one to use.
 
 ---
 
@@ -25,8 +25,8 @@ past bars:
 
 | | n | Win | Mean bps | Sharpe |
 |---|---|---|---|---|
-| Centred (look-ahead) | 105 | 77.1% | +77.0 | +0.75 |
-| Trailing (implementable) | 107 | 64.5% | +50.3 | +0.49 |
+| Centred (look-ahead) | 110 | 76.4% | +78.3 | +0.77 |
+| Trailing (implementable) | 113 | 64.6% | +51.2 | +0.50 |
 
 **About a third of the apparent edge was look-ahead.** The tier ordering
 survives, which is the reason the result is still worth reporting.
@@ -113,10 +113,10 @@ of the *strategy*.
 
 ### 6. The cycles are not independent
 
-107 cycles sounds like a large sample. It is 7 names over 25 months, sharing
+113 cycles sounds like a large sample. It is 7 names over 27 months, sharing
 market direction, the same monthly roll calendar, and in several cases the
 same sector. Cycles that settle in the same month are exposed to the same
-conditions. The effective sample size is materially smaller than 107, so
+conditions. The effective sample size is materially smaller than 113, so
 bootstrap confidence intervals and a sign test are reported alongside the
 point estimates in `results/summary_stats.md`.
 
@@ -131,9 +131,13 @@ problem.
 
 ### 8. The hard-to-borrow filter barely filters
 
-`peak_b12 >= 0.05` admits **90% of all cycles**, because the `365/F1_dte` term
-inflates `b12` mechanically near expiry: at one day to expiry, almost any
-positive spread annualises above 5%. The binary filter is close to meaningless;
+`peak_b12 >= 0.05` admits **90% of all cycles**. The reason is the formula:
+`b12 = r − ln(F2/F1)/(τ2 − τ1)` with r = 6.25%, so whenever F1 ≥ F2 the log term
+is ≤ 0 and `b12 ≥ 6.25%`, already above the 5% cut. The filter therefore only asks
+whether the smoothed front month ever traded above the next month, which it does on
+89% of bars in these pre-selected names. (`b12` does not blow up near expiry:
+`τ2 − τ1` stays about a month, and its median rises only from 10% to 13% into the
+final week.) The binary filter is close to meaningless;
 the tier split is the economically informative cut, and the non-HTB tier is
 better treated as a control group than as an exclusion.
 
@@ -154,38 +158,38 @@ and to nothing else.
 
 ### 10. Data quality
 
-- **BDL** ships 24 columns instead of 52 — no `feat_*` features — so it appears
-  in spread and open-interest statistics but is excluded from every
-  implied-volatility and roll-feature result.
-- **7 of 126 cycles** have fewer than 5 bars inside the expiry week
+- **Spot is Kite's** (back-adjusted for splits and bonuses; none fell inside this
+  window for the seven names). Intraday Kite spot currently ends on 2026-09-18, so
+  spot-based borrow columns are NaN on the last bars of series that run later.
+  The spread itself does not use spot.
+- **6 of 135 cycles** have fewer than 5 bars inside the expiry week
   (`gap_flag`).
-- **11% of cycles** have a build trough at the cycle boundary, where it cannot
+- **13% of cycles** have a build trough at the cycle boundary, where it cannot
   be distinguished from the edge of the data (`build_censored`).
-- **33% of cycles** peak *outside* the final expiry week, so "the premium peaks
+- **32% of cycles** peak *outside* the final expiry week, so "the premium peaks
   in expiry week" is a tendency, not a rule.
 - F1 and F2 closes are forward-filled with no stale-quote detection.
 
 ### 11. Two day-count conventions coexist
 
-`b12` annualises with **calendar days / 365** (`F1_dte`). The options layer of
-the source pipeline prices on **trading days**, with `F1_dte_star` decrementing
-by 15/375 per bar. The Black-76 fallback in this repository uses `dte/365` for
-consistency with `b12`.
+`b12` annualises with `F1_dte_star / 365`: whole calendar days to expiry plus the
+fraction of the current session left (1/25 per 15-minute bar). The anatomy tables
+in doc 02 use whole calendar days (`F1_dte`). The Black-76 fallback in this
+repository uses `dte/365`. The roll-mechanics analysis (doc 08) pools cycles on
+**trading sessions to expiry**, because calendar DTE lands on different weekdays
+before and after NSE's September 2025 move from Thursday to Tuesday expiries.
 
-Consequence: `b12` and option-implied carry are **not directly comparable**,
-and any attempt to arbitrage one against the other would be comparing different
-units. Since the results here never mix the two, this is a documentation issue
-rather than a live error — but it would become one immediately in any
-extension.
+Consequence: quantities from these conventions are not interchangeable, and any
+extension that mixes them must convert explicitly.
 
 ### 12. The detector is a rule, not a model
 
 BUILD is defined as the argmin before the peak, so `build < peak` is true by
-construction and the 94% "phases ordered" figure proves nothing on its own.
+construction and the 99% "phases ordered" figure proves nothing on its own.
 
 The claim rests instead on the placebo test: the same measurement anchored on
-arbitrary mid-cycle spread peaks retraces a median of **0.41**, against
-**0.87** into expiry (Mann-Whitney p = 3×10⁻⁷). That comparison is what
+arbitrary mid-cycle spread peaks retraces a median of **0.35**, against
+**0.83** into expiry (Mann-Whitney p = 3×10⁻⁸). That comparison is what
 distinguishes expiry-forced convergence from ordinary mean reversion.
 
 ### 13. Lot sizes are unknown for 5 of 7 names

@@ -42,8 +42,8 @@ each is visible:
 |---|---|---|---|---|
 | As published | 22 | 100% | ₹+13,429/lot | +1.83 |
 | ① Charge slippage instead of crediting it | 22 | 86% | ₹+8,674/lot | — |
-| ② Remove the options gate, add all 7 names | 105 | 77.1% | +77.0 bps | +0.75 |
-| ③ Replace the centred smoother with a trailing one | 107 | 64.5% | +50.3 bps | +0.49 |
+| ② Remove the options gate, add all 7 names | 110 | 76.4% | +78.3 bps | +0.77 |
+| ③ Replace the centred smoother with a trailing one | 113 | 64.6% | +51.2 bps | +0.50 |
 
 Each correction is documented in [05_limitations.md](05_limitations.md),
 items 1–3. Step ③ is the number to use.
@@ -59,20 +59,20 @@ This is the table that decides whether the mechanism is real. If the premium
 is what generates the edge, the edge should scale with the premium — and it
 should vanish where there is no premium.
 
-**Trailing signal, costs charged, 107 cycles:**
+**Trailing signal, costs charged, 113 cycles:**
 
 | Tier | n | Win rate | Mean bps | Median bps | Sharpe |
 |---|---|---|---|---|---|
-| Non-HTB (<5%) | 12 | 0% | −36.9 | −32.5 | −2.20 |
+| Non-HTB (<5%) | 13 | 0% | −37.8 | −34.1 | −2.30 |
 | Moderate (5–15%) | 28 | 61% | +10.3 | +4.7 | +0.22 |
-| **Extreme (≥15%)** | **67** | **78%** | **+82.6** | **+65.8** | **+0.73** |
+| **Extreme (≥15%)** | **72** | **78%** | **+83.2** | **+70.3** | **+0.75** |
 
 The ordering is monotone in win rate, mean and median, and it survives the
 removal of the look-ahead. The non-HTB tier — where the mechanism predicts
 nothing to harvest — loses money, which is the correct outcome for a
 mechanism-specific trade rather than an embarrassment.
 
-With n = 12 the control group is a consistency check, not a statistical test.
+With n = 13 the control group is a consistency check, not a statistical test.
 
 ## 4. It is the spread, not the stock
 
@@ -106,8 +106,8 @@ result came to show a 100% win rate.
 ## 6. S2 and the reproduction gap
 
 S2 reproduces to 9 cycles and ₹+9,615 mean against the original's ₹+9,765; S3
-reproduces to 10 cycles against 13. The difference comes from the shipped
-option data: this repository ships an ATM ±3-strike extract rather than the
+reproduces to 10 cycles against 13. The difference comes from the option data:
+the analysis reads an ATM ±3-strike slice of the stored chains rather than the
 full chains, so a small number of fallback repricings differ.
 
 S1 — the headline, and the only construction with a clean result — reproduces

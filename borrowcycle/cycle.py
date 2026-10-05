@@ -29,8 +29,8 @@ import pandas as pd
 SMOOTH = 11
 
 #: A cycle counts as hard-to-borrow when smoothed b12 peaks at or above this
-#: (5% annualised). Note this filter is close to non-binding -- the 365/dte
-#: term inflates b12 near expiry, so ~91% of cycles clear it. The economically
+#: (5% annualised). Note this filter is close to non-binding: b12 >= r = 6.25%
+#: whenever F1 >= F2, so ~90% of cycles clear it. The economically
 #: meaningful cut is the tier split below.
 HTB_THRESH = 0.05
 

@@ -6,7 +6,7 @@ obvious alternative explanation.
 The generated tables live in
 [`results/anatomy_summary.md`](../results/anatomy_summary.md); the per-cycle
 data is [`results/cycle_moments.csv`](../results/cycle_moments.csv), one row
-per cycle. Everything below is produced by `scripts/01_cycle_anatomy.py`.
+per cycle. Everything below is produced by `scripts/01_cycle_anatomy/01_cycle_anatomy.py`.
 
 ---
 
@@ -56,9 +56,9 @@ Searching the whole cycle instead gives a real distribution:
 | Detector | dte_build p25 / median / p75 | censored |
 |---|---|---|
 | Legacy (`DTE <= 7` window) | 7.0 / 7.0 / 7.0 | 0% |
-| Window-free | 20.0 / 26.0 / 27.0 | 11% |
+| Window-free | 20.0 / 26.0 / 27.0 | 13% |
 
-The window-free detector honestly reports that **11% of cycles** have their
+The window-free detector honestly reports that **13% of cycles** have their
 trough at the start of the data, where it cannot be told apart from the cycle
 boundary. Those are flagged `build_censored` and can be excluded. The legacy
 detector reported 0% censoring only because it had already replaced every
@@ -76,8 +76,8 @@ window-free measurements are stable:
 | smooth | dte_build median | dte_peak median | retracement median | censored |
 |---|---|---|---|---|
 | 5 | 26.0 | 4.0 | 0.84 | 13% |
-| 11 | 26.0 | 4.0 | 0.87 | 11% |
-| 21 | 26.0 | 4.0 | 0.87 | 16% |
+| 11 | 26.0 | 4.0 | 0.83 | 13% |
+| 21 | 26.0 | 4.0 | 0.83 | 17% |
 
 `MIN_SUSTAIN` does not move the build or peak at all — it only affects where
 the collapse trigger fires, which is its purpose.
@@ -93,19 +93,19 @@ aligned on the peak. Normalising by each cycle's own amplitude is what makes a
 The asymmetry is the finding: weeks of grind up, days of give-back.
 
 **Timing.** Build starts a median of 26 days before expiry; the peak comes 4
-days before. The peak falls inside the final expiry week in **67%** of cycles —
+days before. The peak falls inside the final expiry week in **68%** of cycles —
 a tendency, not a rule, and worth stating because the original framing assumed
 the expiry week was where everything happened.
 
-**Magnitude.** Median amplitude is 116 bps of the front-month price; the median
-cycle retraces 0.87 of it by settlement, and 54% retrace more than 80%. The
-median spread at expiry is −10 bps: the front month closes slightly *below* the
+**Magnitude.** Median amplitude is 121 bps of the front-month price; the median
+cycle retraces 0.83 of it by settlement, and 53% retrace more than 80%. The
+median spread at expiry is −17 bps: the front month closes slightly *below* the
 next month, which is what convergence to spot plus a small carry differential
 implies.
 
 **The tiers share a shape but not a size.** The normalised curves for non-HTB,
 moderate and extreme cycles lie almost on top of each other. The difference is
-amplitude — 39, 63 and 160 bps respectively. The borrow premium sets how big
+amplitude — 38, 63 and 168 bps respectively. The borrow premium sets how big
 the cycle is, not what it looks like.
 
 ## 5. The roll
@@ -114,25 +114,26 @@ the cycle is, not what it looks like.
 
 | Moment | median F1 OI / F2 OI |
 |---|---|
-| BUILD (spread trough) | **20.4×** |
+| BUILD (spread trough) | **18.6×** |
 | PEAK (spread top) | **1.0×** |
 | COLLAPSE (trigger) | **0.5×** |
 
-Paired Wilcoxon on log(ratio), build vs peak, n = 109: **p = 3×10⁻¹⁹**.
+Paired Wilcoxon on log(ratio), build vs peak, n = 118: **p = 2×10⁻²⁰**.
 
 At the trough the front month carries roughly twenty times the next month's
 open interest — normal for an active contract. By the time the spread peaks,
-the two are at parity. The roll is essentially complete *before* the premium
-starts to fall.
+the two are at parity: the spread tops out as the roll crosses over, and gives
+back once the front month is the minority. [08_roll_mechanics.md](08_roll_mechanics.md)
+measures this on the open-interest ratio directly.
 
-Front-month open interest turns down before the spread peaks in **98 of 126
-cycles (78%)**, binomial p = 3×10⁻¹⁰, and the pattern holds in every name
-individually (61%–86%). Median lead: 4.6 sessions.
+Front-month open interest turns down before the spread peaks in **106 of 135
+cycles (79%)**, binomial p = 2×10⁻¹¹, and the pattern holds in every name
+individually (63%–88%). Median lead: 4.7 sessions.
 
 ## 6. The placebo test — the part that carries the claim
 
 BUILD is defined as the argmin before the peak, so `build < peak` is true **by
-construction**. The 94% "phases ordered" statistic proves nothing on its own,
+construction**. The 99% "phases ordered" statistic proves nothing on its own,
 and it would be dishonest to present it as evidence.
 
 The real question: does a spread peak revert *more* into expiry than an
@@ -144,22 +145,20 @@ The test anchors the identical measurement on the argmax of a randomly chosen
 
 | | median retracement | n |
 |---|---|---|
-| Observed (anchored on expiry) | **0.87** | 125 |
-| Placebo (arbitrary mid-cycle peaks) | **0.41** | 1178 |
+| Observed (anchored on expiry) | **0.83** | 133 |
+| Placebo (arbitrary mid-cycle peaks) | **0.35** | 1215 |
 
-Mann-Whitney, observed > placebo: **p = 3×10⁻⁷**.
+Mann-Whitney, observed > placebo: **p = 3×10⁻⁸**.
 
-An arbitrary spread peak gives back about 40% of its move. A peak that runs
-into expiry gives back about 87%. The difference is the part expiry forces, and
+An arbitrary spread peak gives back about 35% of its move. A peak that runs
+into expiry gives back about 83%. The difference is the part expiry forces, and
 it is what the strategy harvests.
 
 ## 7. Caveats specific to this measurement
 
-- 11% of cycles have a censored build trough.
-- 7 of 126 cycles have fewer than 5 bars in the expiry week (`gap_flag`).
-- 33% of cycles peak outside the expiry week.
-- BDL contributes to spread and open-interest statistics but not to any
-  implied-volatility result, because it ships without the feature columns.
+- 13% of cycles have a censored build trough.
+- 6 of 135 cycles have fewer than 5 bars in the expiry week (`gap_flag`).
+- 32% of cycles peak outside the expiry week.
 - `retracement` is used as the normalised measure rather than
   `collapse / peak`, because peak spreads near zero make the latter explode —
   its mean across cycles exceeds 600% and is meaningless.
