@@ -1,125 +1,110 @@
 # Data dictionary
 
-Everything the analysis reads is in `data/`. No database, no credentials,
-25.8 MB total. Per-file row counts and sha256 checksums are in
-[`data/MANIFEST.json`](../data/MANIFEST.json).
+All data lives in the backtesting engine's **ArcticDB** store; nothing is copied into
+this repository. [`pipeline/README.md`](../pipeline/README.md) describes how it is
+fetched and built, and [`borrowcycle/data.py`](../borrowcycle/data.py) is the only
+place the analysis reads it.
 
-## Coverage
+The store keeps each value **once** (slim layout). The analysis reads a joined frame
+in which the computed borrow columns, the futures-panel inputs and Kite spot are
+lined up on the same timestamps.
 
-| Ticker | Rows | Cycles | Columns |
-|---|---|---|---|
-| SBICARD | 11,569 | 20 | 52 |
-| ASTRAL | 12,515 | 22 | 52 |
-| VOLTAS | 11,625 | 20 | 52 |
-| IREDA | 8,937 | 19 | 52 |
-| KPITTECH | 9,426 | 18 | 52 |
-| BDL | 7,437 | 15 | **24** |
-| RVNL | 6,329 | 13 | 52 |
+## Coverage (15-minute, the research universe)
 
-67,838 bars in total, 15-minute frequency, 2024-07-03 to 2026-08-12.
-**BDL ships without the `feat_*` columns** and is therefore excluded from every
-implied-volatility and roll-feature statistic, while still contributing to the
-spread and open-interest results.
+| Ticker | Bars | Cycles in store | First bar | Last bar |
+|---|---|---|---|---|
+| SBICARD | 12,779 | 22 | 2024-07-03 | 2026-08-18 |
+| ASTRAL | 13,425 | 24 | 2024-08-01 | 2026-10-01 |
+| VOLTAS | 11,625 | 20 | 2024-07-03 | 2026-06-10 |
+| IREDA | 9,847 | 21 | 2025-02-28 | 2026-10-01 |
+| KPITTECH | 9,851 | 19 | 2024-11-29 | 2026-07-06 |
+| BDL | 8,347 | 17 | 2025-06-02 | 2026-10-01 |
+| RVNL | 6,329 | 13 | 2025-06-02 | 2026-06-10 |
 
-Index: tz-aware `DatetimeIndex` in `Asia/Kolkata`, monotonically increasing.
-`borrowcycle.data.load_panel` restores the timezone explicitly after reading
-parquet — the exit rule compares against a localised noon timestamp and would
-mis-time silently against a naive index.
+Cycles with fewer than 40 bars are skipped by `iter_cycles`. All seven tickers carry
+the full feature set.
 
-## `data/borrow_panel/{TICKER}.parquet`
+Index: tz-aware `DatetimeIndex` in `Asia/Kolkata`, monotonically increasing. The
+exit rule compares against a localised noon timestamp and would mis-time silently
+against a naive index.
 
-### Prices and contract state
+## Where each column comes from
+
+### `futures/{T}/15minute` — the F1/F2/F3 panel (31 columns)
 
 | Column | Meaning |
 |---|---|
-| `F1_close`, `F2_close`, `F3_close` | Close of the 1st, 2nd and 3rd nearest futures contract |
-| `SPOT_close` | Underlying spot close |
-| `F1_oi`, `F2_oi`, `F3_oi` | Open interest per contract slot |
-| `F1_volume`, `F2_volume` | Traded volume |
-| `cycle_id` | Expiry cycle index, 1 = oldest. Contiguous per ticker |
-| `is_expiry_day` | 1 on the front-month expiry date |
-| `in_backwardation` | Spot above the front-month future |
+| `F1_open … F3_close` | OHLC of the 1st, 2nd and 3rd nearest futures contract |
+| `F1_volume`, `F1_oi`, … | Traded volume and open interest per slot |
+| `F1_dte`, `F2_dte`, `F3_dte` | **Calendar days** to that contract's expiry |
+| `F1_expiry`, `F1_ticker`, … | The contract occupying each slot |
+| `cycle_id` | Count of front-month changes, 1 = oldest; contiguous per ticker |
+| `is_expiry_day` | True on bars of a contract's expiry date |
 
-The `Fn` slot is defined by expiry order at each timestamp: `F1` is the nearest
-contract not yet expired, `F2` the next, and so on. A given physical contract
-moves from `F3` to `F2` to `F1` as the calendar advances.
+The `Fn` slot is assigned by expiry order on each trading day: `F1` is the nearest
+contract not yet expired, `F2` the next. A physical contract moves F3 → F2 → F1 as
+the calendar advances. The panel is built from the raw per-contract candles in
+`futures_contracts/{T}/15minute/{expiry}`.
 
-### Time to expiry — two conventions
+### `spot/{T}/15minute` (Kite) — joined as `SPOT_*`
 
-| Column | Convention |
-|---|---|
-| `F1_dte`, `F2_dte`, `F3_dte` | **Calendar days** to expiry. Used by `b12` and everywhere in this repo |
-| `F1_dte_star`, … | **Trading days**, decrementing 15/375 per 15-minute bar |
+`SPOT_close` (and `SPOT_open/high/low/volume`) are joined on timestamp at read time.
+Kite back-adjusts splits and bonuses; none fell inside this window for the seven
+names (Kite and Upstox daily closes agree on every day). Intraday Kite spot ends on
+2026-09-18, so spot-based columns are NaN on the last bars of series that run later.
 
-These are not interchangeable. See [05_limitations.md](05_limitations.md),
-item 11.
+### `borrow_rates/{T}/15minute` — computed columns
 
-### Borrow rates
+τ is a **fractional trading-time DTE**: `F{n}_dte_star = (F{n}_dte + 1) − i/25`, with `i`
+the bar's 1-based rank within its trading day. τ = dte_star / 365, r = 6.25%.
 
 | Column | Definition |
 |---|---|
-| `b1`, `b2`, `b3` | Annualised basis of each futures slot against spot |
-| **`b12`** | `(F1 − F2)/F2 × 365/F1_dte` — the annualised borrow premium. **This repo's classifier, never its timer** |
-| `b23`, `b13` | The same for other contract pairs |
+| `F1_dte_star`, `F2_dte_star`, `F3_dte_star` | the fractional DTE above |
+| `b1`, `b2`, `b3` | `r − ln(Fn / S) / τn`: implied borrow rate of each slot against spot, floored at 0 |
+| **`b12`** | `r − ln(F2 / F1) / (τ2 − τ1)`: implied borrow rate between F1 and F2, floored at 0. **The research uses it to classify cycles, never to time trades** |
+| `b23`, `b13` | the same for the other contract pairs |
+| `in_backwardation` | `F1 < S` |
+| `spread_spot_f1`, `spread_spot_f2`, `spread_f1_f2` | `S − F1`, `S − F2`, `F1 − F2` in price points |
 | `OI_ratio` | `F1_oi / F2_oi` |
-| `U_t` | Source-pipeline roll-pressure measure; not used here |
+| `U_t` | `OI_ratio / (F1_dte_star + 0.04 on expiry-day bars)`: roll pressure; not used by the analysis |
 
-### Derived features (`feat_*`, absent for BDL)
+`b12`'s denominator `τ2 − τ1` stays close to one month through the cycle. `b1` is the
+measure whose denominator goes to zero at expiry.
 
-**Roll flow** — all differences computed within `cycle_id`, so no value bleeds
-across an expiry boundary:
+### `borrow_rates/{T}/15minute` — features (`feat_*`)
 
-| Column | Definition |
-|---|---|
-| `feat_oi_concentration` | `F1_oi / (F1_oi + F2_oi)` |
-| `feat_roll_velocity` | First difference of the above |
-| `feat_roll_acceleration` | Second difference |
-| `feat_net_roll_flow` | `ΔF2_oi − ΔF1_oi` |
-| `feat_roll_fraction` | Net roll flow ÷ total open interest |
-| `feat_flow_intensity` | Roll fraction ÷ `F1_dte_star` |
-| `feat_roll_deviation` | Concentration minus its mean at the same DTE |
-| `feat_relative_oi_change` | Growth-rate difference between the two legs |
-| `feat_Vshare`, `feat_volflow` | Volume-weighted equivalents |
+25 columns built by [`pipeline/build_features`](../pipeline/build_features/README.md),
+where each is defined. Groups: roll flow and open interest (within-cycle differences),
+volume share, the front-month implied-vol smile, and b12 dynamics and trend
+regressions. Features built from earlier cycles (`feat_roll_deviation`,
+`feat_b12_percentile`, `feat_residual_atm_iv`) pool only cycles that started before
+the bar's own, so nothing looks ahead. The `feat_beta_*` regressions of log price on
+dte_star measure **cycle-to-date momentum**, not carry. `feat_roll_fraction` existed
+in the September snapshot and has been removed.
 
-**Options surface** — from the front-month chain:
+## Option chains — `options_enriched/{T}/15minute/{expiry}`
 
-| Column | Definition |
-|---|---|
-| `feat_atm_iv` | Mean implied vol of the ATM call and put |
-| `feat_otm_25d_call_iv`, `feat_otm_15d_call_iv` | IV at the nearest 0.25 / 0.15 delta call |
-| `feat_otm_25d_put_iv`, `feat_otm_15d_put_iv` | The put equivalents |
-| `feat_25d_risk_reversal` | 25-delta call IV minus 25-delta put IV (put skew) |
-| `feat_residual_atm_iv` | ATM IV net of its fitted relationship to the basis |
+`load_options` keeps ATM ± 3 strikes, where the strike step is the median gap
+between adjacent listed strikes for that expiry, and these columns: `strike`,
+`opt_type` (`CE`/`PE`), `close`, `iv`, `delta`, `vega`, `dte`, `futures_ref_price`,
+`expiry`, `oi`, `volume`. Two stored column layouts exist (from two option
+pipelines). The store wrapper renames `strike_price`/`instrument_type`/`futures_price`
+to the names above.
 
-**Dynamics:** `feat_b12_slope_1d` (25-bar rolling OLS slope of `b12`),
-`feat_b12_accel`, `feat_b12_percentile` (rank within the same integer-DTE
-bucket), and `feat_beta_*` / `feat_r2_*` (within-cycle regressions of
-log price on time to expiry).
+Enriched chains exist for all seven tickers. The options strategies are evaluated on
+SBICARD and RVNL only (`OPTION_TICKERS`), the two names with known lot sizes.
 
-## `data/options_atm/{TICKER}_{expiry}.parquet`
-
-SBICARD and RVNL only, 33 expiries, ATM ± 3 strikes. The strike step is the
-median gap between adjacent listed strikes for that expiry. The backtest only
-ever selects the single ATM strike, so ±3 is a generous margin — but it means
-these files **cannot** be used for wing or full-surface work.
-
-Columns: `strike`, `opt_type` (`CE`/`PE`), `close`, `iv`, `delta`, `vega`,
-`dte`, `futures_ref_price`, `expiry`, `oi`, `volume`.
-
-`load_options` raises `OptionsUnavailable` when an expiry is not shipped.
-Callers must degrade the options strategies to `NaN` and keep the futures
-result — silently skipping the cycle is the selection bug documented in
+`load_options` raises `OptionsUnavailable` when an expiry has no chain. Callers must
+degrade the options strategies to `NaN` and keep the futures result; silently
+skipping the cycle is the selection bug documented in
 [05_limitations.md](05_limitations.md), item 2.
 
 ## Lot sizes
 
-Known only for **SBICARD (800)** and **RVNL (1525)**. The other five are not in
-the source research and the panel carries no lot-size column, so they are
-deliberately absent from `borrowcycle.data.LOT_SIZES` rather than guessed.
-
-Consequence: wide-scope results are reported in **basis points of F1** and
-never in rupees per lot. Basis points are the more comparable unit across names
-in any case.
+Known only for **SBICARD (800)** and **RVNL (1525)**. The others are deliberately
+absent from `borrowcycle.data.LOT_SIZES` rather than guessed, so wide-scope results
+are reported in **basis points of F1**, never in rupees per lot.
 
 ## Units used in results
 
@@ -128,5 +113,5 @@ in any case.
 | Rupees per share | Raw spread levels |
 | **Basis points of F1** | All normalised and wide-scope results |
 | Rupees per lot | SBICARD/RVNL only |
-| Annualised decimal | `b12` (0.15 = 15%) |
+| Annualised decimal | `b1…b13` (0.15 = 15%) |
 | 15-minute bars | Event time. 25 bars = 1 NSE session |

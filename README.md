@@ -177,25 +177,34 @@ here.
 
 ## 7. Reproducing this
 
-Everything needed is in the repository — 25.8 MB of parquet, no database, no
-credentials.
+All data lives in one place: the backtesting engine's **ArcticDB** store. The
+pipeline in [`pipeline/`](pipeline/) builds it from the broker APIs, and the
+analysis reads it directly; nothing is copied into this repository.
 
 ```bash
 pip install -e .
-make all
+# 1. data (skips everything already stored; tokens only needed for missing data)
+python pipeline/fetch_ticker/fetch_ticker.py SBICARD RVNL KPITTECH ASTRAL BDL IREDA VOLTAS
+python pipeline/build_borrow_rates/build_borrow_rates.py
+python pipeline/build_features/build_features.py
+# 2. analysis
+make all          # or run scripts/01…06 in order
+make test
 ```
 
-That regenerates every table and figure in about ten minutes.
-`scripts/00_export_data.py` is the one script that cannot run from a clone: it
-documents how the shipped data was extracted from the original ArcticDB store.
+`make all` regenerates every table and figure in about ten minutes. Set
+`BORROWCYCLE_ENGINE_ROOT` if the engine isn't at its default path. Each script
+folder has a README describing its inputs, outputs and method.
 
 ## 8. Repository map
 
 | Path | What it holds |
 |---|---|
-| `borrowcycle/` | Library: data access, cycle detection, backtest, statistics, plotting |
-| `scripts/01…06` | Numbered, runnable analysis steps |
-| `data/` | 7 futures/borrow panels + 33 ATM option extracts, with `SCHEMA.md` and a checksummed `MANIFEST.json` |
+| `pipeline/` | Data steps: `fetch_ticker` (futures, missing spot), `build_borrow_rates`, `build_features` |
+| `borrowcycle/pipeline/` | Their library: ArcticDB access in the slim layout, Upstox/Kite clients, panel, borrow, features |
+| `borrowcycle/` | Analysis library: data access, cycle detection, backtest, statistics, plotting |
+| `scripts/01…06` | Numbered, runnable analysis steps, one folder each |
+| `tests/` | Pipeline tests on throwaway stores (never the engine store) |
 | `results/` | Every number quoted above, as CSV or Markdown |
 | `figures/` | The 13 figures in the write-up; `appendix/` holds 125 exploratory charts |
 | `docs/` | Mechanism, anatomy, results, negative results, limitations, data dictionary, provenance |

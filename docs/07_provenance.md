@@ -54,17 +54,17 @@ and every `.py` compiles. They are preserved unmodified in
 Two further objects were identified and deliberately **not** recovered:
 earlier revisions of the source repo's `arctic_store.py`
 (`731a3a41870425e6b8f1afe5414b1133e3e09c8a`) and `feature_builder.py`
-(`ac39bdd36cdbd4524b5f8463dcb676f947f6712a`). Both belong to the data pipeline
-rather than the research, and this repository ships the data instead of the
-pipeline.
+(`ac39bdd36cdbd4524b5f8463dcb676f947f6712a`). Both belong to the data pipeline;
+the current versions are ported into `borrowcycle/pipeline/` instead.
 
 ## What changed in the port
 
-- **The ArcticDB dependency was removed.** The original read a 25 GB LMDB
-  store. The port reads 25.8 MB of parquet through `borrowcycle/data.py`.
-  Equivalence was verified once, before the store was dropped: for all 7
-  panels, `load_panel(t)` equals `ArcticStore().read_borrow_rates(t,'15minute')`
-  under `pandas.testing.assert_frame_equal`.
+- **The data is read from the engine's ArcticDB, in one place.** The first
+  version of this repository shipped a 25.8 MB parquet snapshot (September 2026,
+  still in git history at commit `3063a4a`). It now reads the backtesting
+  engine's ArcticDB directly through `borrowcycle/data.py`, with the store's
+  slim layout (each value stored once, joined at read time). The data pipeline
+  that builds it is in `pipeline/`.
 - **Three defects were fixed** — a look-ahead smoother, a sample-selection
   gate, and an inverted slippage sign. Each is reproducible in its original
   form via a flag, so the size of every correction can be measured. See
@@ -79,10 +79,15 @@ pipeline.
 
 ## Data lineage
 
-NSE single-stock futures and options, 15-minute bars, sourced via the Upstox
-and Zerodha Kite APIs into an ArcticDB store, with `b12`, DTE and the `feat_*`
-columns computed by the source repository's feature pipeline.
+NSE single-stock futures (Upstox) and spot (Zerodha Kite), 15-minute bars, in
+the backtesting engine's ArcticDB:
 
-`scripts/00_export_data.py` is the extraction step and the only script that
-cannot run from a clone. It is kept so the lineage is auditable, and
-`data/MANIFEST.json` carries a sha256 for every shipped file.
+1. `pipeline/fetch_ticker`: futures contracts → `futures_contracts` → the F1/F2/F3
+   panel in `futures`. Kite spot is fetched only if the store lacks it.
+2. `pipeline/build_borrow_rates`: `b1…b13`, fractional DTE, spreads → `borrow_rates`.
+3. `pipeline/build_features`: the 25 `feat_*` columns → `borrow_rates`.
+
+The panels in the store were last rebuilt from the raw contracts on 2026-10-05.
+That rebuild recovered history the old year-file parquet layout had truncated, and
+switched spot to Kite. `pipeline/build_borrow_rates` and `pipeline/build_features`
+reproduce the stored values exactly (verified bar by bar).
