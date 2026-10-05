@@ -60,9 +60,26 @@ midpoint in 63% of cycles (mean lead 3.7 sessions, 95% CI 2.3–5.3). The median
 and the sign test is not significant (p = 0.32), so "peak at the crossover" is the
 fair summary rather than "peak strictly before it".
 
-**5. By ticker.** The build into the roll is clear in IREDA, SBICARD and RVNL. KPITTECH,
-ASTRAL, BDL and VOLTAS carry little premium for most of the cycle and mostly just
-converge at expiry. The mechanism is strongest where borrow is tightest.
+**5. By ticker, every name shows the cycle when borrow is extreme.** Restricted to
+extreme cycles (EXT, peak b12 ≥ 15%, n = 92), all seven tickers build into the final
+week and give the premium back at expiry. Median spread in bps:
+
+| ticker (EXT cycles) | 10 | 6 | 4 | 3 | 2 | 1 | 0 | median per-cycle peak (sessions out) |
+|---|---|---|---|---|---|---|---|---|
+| IREDA (19) | 97 | 145 | 186 | 226 | **253** | 228 | 63 | 1 |
+| SBICARD (17) | 85 | 114 | 122 | 119 | **135** | 106 | 81 | 2 |
+| RVNL (12) | 202 | 217 | 222 | 217 | 284 | **306** | 211 | 1 |
+| ASTRAL (11) | 66 | 74 | 66 | 59 | **124** | 114 | 35 | 2 |
+| BDL (9) | 73 | 99 | 102 | 110 | 123 | **220** | −53 | 1 |
+| VOLTAS (13) | 73 | 91 | **108** | 105 | 81 | 72 | 61 | 1 |
+| KPITTECH (11) | 20 | **51** | 43 | 20 | 11 | 28 | −49 | 4 |
+
+The names differ mainly in how *often* they are extreme. IREDA and RVNL are extreme in
+every or nearly every cycle. ASTRAL and BDL each have six no-premium cycles, which
+flatten their all-cycle profiles. Two qualifications apply. KPITTECH's premium is
+smaller and its median profile peaks earlier, about 6 sessions out. RVNL's spread is
+still elevated at the expiry close (median 211 bps). Full table:
+[`results/roll_mechanics.md`](../results/roll_mechanics.md) §6.
 
 ## Reading the figures
 
@@ -72,7 +89,7 @@ converge at expiry. The mechanism is strongest where borrow is tightest.
 | [14](../figures/14_phase_portrait.png) | Spread against the F1/F2 ratio (log, reversed so the roll runs left to right); faint lines are single cycles |
 | [15](../figures/15_spread_by_oi_ratio.png) | Distribution of the spread in each ratio bin, and a ticker × bin heatmap |
 | [16](../figures/16_roll_midpoint_event.png) | Every cycle aligned on its roll midpoint |
-| [17](../figures/17_roll_profile_by_ticker.png) | Figure 00 for each ticker |
+| [17](../figures/17_roll_profile_by_ticker.png) | Figure 00 for each ticker, extreme cycles only |
 | [explorer](explorer/index.html) | Any single cycle against the population, interactively |
 
 ## Caveats

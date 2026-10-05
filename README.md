@@ -94,9 +94,11 @@ The same pattern by name, and the binned distributions:
 
 ![by ratio](figures/15_spread_by_oi_ratio.png)
 
-It is strongest where borrow is tight (IREDA, SBICARD, RVNL). In KPITTECH, ASTRAL,
-BDL and VOLTAS the spread builds little and mostly just converges at expiry
-([figure 17](figures/17_roll_profile_by_ticker.png)).
+In extreme hard-to-borrow cycles (b12 ≥ 15%, n = 92) the pattern holds for **every
+one of the seven names**. The spread builds into the final week, peaks 1–4 sessions
+out, and falls back at expiry. KPITTECH is the exception: its premium is smaller and
+peaks earlier, about 6 sessions out
+([figure 17](figures/17_roll_profile_by_ticker.png), [doc 08 §5](docs/08_roll_mechanics.md)).
 
 Aligning every cycle on the session when the front month becomes the minority shows
 the spread holding near its peak through the crossover and converging after it:

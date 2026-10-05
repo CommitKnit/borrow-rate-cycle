@@ -10,8 +10,9 @@ Outputs
 -------
   results/roll_sessions.csv            one row per cycle-session (end of day)
   results/roll_cycles.csv              one row per cycle: peak vs roll milestones
-  results/roll_profile_by_session.csv  medians/IQR by sessions-to-expiry (all, tier, ticker)
-  results/spread_by_oi_ratio.csv       spread by F1/F2 OI-ratio bin (all, tier, ticker)
+  results/roll_profile_by_session.csv  medians/IQR by sessions-to-expiry (all, tier, ticker,
+                                       ticker_ext = each ticker's EXT cycles only)
+  results/spread_by_oi_ratio.csv       spread by F1/F2 OI-ratio bin (same groups)
   results/roll_midpoint_event.csv      profile aligned on the roll midpoint (ratio first < 1)
   results/roll_mechanics.md            the threshold statistics
 """
@@ -107,17 +108,19 @@ def main() -> int:
     S = pd.concat(sessions)
     S.index.name = "date"
     C = pd.DataFrame(cycles)
+    # per-ticker groups over extreme cycles only, so NON/MOD cycles don't dilute a name
+    S["ticker_ext"] = S["ticker"].where(S["tier"] == "EXT")
     S.to_csv(RESULTS / "roll_sessions.csv")
     C.to_csv(RESULTS / "roll_cycles.csv", index=False)
 
     cols = ["spread_bps", "spread_norm", "oi_share_f1", "oi_ratio"]
     win = S[S["sessions_left"].between(0, MAX_SESSIONS)]
-    profile(win, "sessions_left", cols, ["all", "htb", "tier", "ticker"]).to_csv(
-        RESULTS / "roll_profile_by_session.csv", index=False)
+    prof = profile(win, "sessions_left", cols, ["all", "htb", "tier", "ticker", "ticker_ext"])
+    prof.to_csv(RESULTS / "roll_profile_by_session.csv", index=False)
 
     S["oi_bin"] = roll.oi_bin(S["oi_ratio"])
     by_bin = profile(S.dropna(subset=["oi_bin"]).assign(oi_bin=lambda d: d["oi_bin"].astype(str)),
-                     "oi_bin", ["spread_bps", "spread_norm", "sessions_left"], ["all", "htb", "tier", "ticker"])
+                     "oi_bin", ["spread_bps", "spread_norm", "sessions_left"], ["all", "htb", "tier", "ticker", "ticker_ext"])
     by_bin["order"] = by_bin["oi_bin"].map({b: i for i, b in enumerate(roll.OI_BIN_LABELS)})
     by_bin.sort_values(["by", "group", "order"]).drop(columns="order").to_csv(
         RESULTS / "spread_by_oi_ratio.csv", index=False)
@@ -192,6 +195,20 @@ def main() -> int:
             r = htbp.loc[s]
             L.append(f"| {s} | {r.spread_bps_median:.0f} | {r.spread_norm_median:.2f} | "
                      f"{100 * r.oi_share_f1_median:.0f}% | {r.oi_ratio_median:.2f} |")
+
+    L.append("\n## 6. By ticker, extreme cycles only (EXT, b12 ≥ 15%)\n")
+    L.append("Median spread (bps) by sessions to expiry. Restricting to EXT keeps a name's no-premium "
+             "cycles from diluting its profile. Peaks are in sessions to expiry.\n")
+    show = [10, 6, 4, 3, 2, 1, 0]
+    L.append("| ticker | EXT cycles | " + " | ".join(str(s) for s in show) + " | peak of median profile | median per-cycle peak |")
+    L.append("|---|---|" + "---|" * len(show) + "---|---|")
+    ext = prof[prof.by == "ticker_ext"]
+    for t in bd.TICKERS:
+        d = ext[ext.group == t].set_index("sessions_left")["spread_bps_median"]
+        last10 = d.loc[d.index <= 10]
+        cyc_peak = C.loc[(C.ticker == t) & (C.tier == "EXT"), "peak_sessions_left"]
+        L.append(f"| {t} | {len(cyc_peak)} | " + " | ".join(f"{d.get(s, np.nan):.0f}" for s in show)
+                 + f" | {last10.idxmax():.0f} | {cyc_peak.median():.0f} |")
     (RESULTS / "roll_mechanics.md").write_text("\n".join(L) + "\n", encoding="utf-8")
 
     print(f"{len(C)} cycles | spread peaks in the {peak_bin}x bin | OI ratio at peak "

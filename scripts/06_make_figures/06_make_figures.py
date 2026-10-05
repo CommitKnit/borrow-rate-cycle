@@ -444,7 +444,7 @@ def fig00_hero(prof: pd.DataFrame):
             label=f"no borrow premium (control), median (n={int(n.n.max())})")
     a1.axhline(0, color="k", lw=0.7, ls=":", alpha=0.5)
     a1.set_ylabel("F1 - F2 spread  (bps of F1)")
-    a1.legend(loc="lower left")
+    a1.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3, frameon=False, fontsize=9)
 
     share = h.oi_share_f1_median.to_numpy(float) * 100
     a2.stackplot(x, share, 100 - share, colors=[P.C_F1OI, P.C_F2OI], alpha=0.55,
@@ -471,15 +471,14 @@ def fig00_hero(prof: pd.DataFrame):
         r = h.loc[sl]
         a2.axvline(-sl, color="#2c3e50", lw=1, ls="--", alpha=0.7)
         y = next(v for k, v in ypos.items() if name.startswith(k))
-        a2.annotate(f"{name}\n{sl} sessions out, F1/F2 {r.oi_ratio_median:.1f}x",
+        a2.annotate(f"{name}\n{sl} session{'' if sl == 1 else 's'} out, F1/F2 {r.oi_ratio_median:.1f}x",
                     (-sl, y), xytext=(-sl - 0.3, y), fontsize=8, ha="right", va="center", color="#2c3e50",
                     bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#2c3e50", alpha=0.88))
     _session_axis(a2)
     pk = int(h.spread_bps_median.idxmax())
-    fig.suptitle("The futures borrow premium builds as the roll begins, peaks while open interest moves "
-                 "to the next month,\nand collapses once the roll is done "
-                 f"(median peak {h.spread_bps_median.max():.0f} bps of F1, {pk} sessions before expiry)",
-                 y=0.995, fontsize=12.5, fontweight="semibold")
+    fig.suptitle("The F1 - F2 premium peaks as open interest rolls to the next month, and collapses at expiry\n"
+                 f"(hard-to-borrow median: peak {h.spread_bps_median.max():.0f} bps of F1, "
+                 f"{pk} sessions before expiry)", y=1.0, fontsize=12.5, fontweight="semibold")
     return P.save(fig, "00_roll_drives_the_premium")
 
 
@@ -592,10 +591,10 @@ def fig16_midpoint(ev: pd.DataFrame):
 
 
 def fig17_by_ticker(prof: pd.DataFrame):
-    """The hero chart for every ticker."""
+    """The hero chart for every ticker, over its extreme (EXT) cycles only."""
     fig, axes = plt.subplots(2, 4, figsize=(16, 7.6), sharex=True)
     for ax, t in zip(axes.flat, bd.TICKERS):
-        d = _profile(prof, "ticker", t)
+        d = _profile(prof, "ticker_ext", t)
         x = -d.index.to_numpy(float)
         ax2 = ax.twinx()
         ax2.fill_between(x, 0, d.oi_share_f1_median * 100, color=P.C_F1OI, alpha=0.12, lw=0)
@@ -606,7 +605,7 @@ def fig17_by_ticker(prof: pd.DataFrame):
         ax.fill_between(x, d.spread_bps_p25, d.spread_bps_p75, color=P.C_SPREAD, alpha=0.15, lw=0)
         ax.plot(x, d.spread_bps_median, color=P.C_SPREAD, lw=2.2)
         ax.axhline(0, color="k", lw=0.6, ls=":", alpha=0.5)
-        ax.set_title(f"{t}  (n={int(d.n.max())} cycles)", fontsize=10.5)
+        ax.set_title(f"{t}  (n={int(d.n.max())} extreme cycles)", fontsize=10.5)
         ax.set_zorder(ax2.get_zorder() + 1)
         ax.patch.set_visible(False)
         _session_axis(ax, step=5)
@@ -619,15 +618,9 @@ def fig17_by_ticker(prof: pd.DataFrame):
         ax.set_xlabel("sessions to expiry")
     for ax in axes[:, 0]:
         ax.set_ylabel("spread (bps)")
-    build = {}
-    for t in bd.TICKERS:
-        d = _profile(prof, "ticker", t).spread_bps_median
-        build[t] = d.loc[1:5].median() - d.loc[15:20].median()
-    strong = [t for t, v in sorted(build.items(), key=lambda kv: -kv[1]) if v >= 20]
-    weak = [t for t in bd.TICKERS if t not in strong]
-    fig.suptitle(f"By ticker: the spread builds into the roll in {', '.join(strong)} "
-                 f"(+20 bps or more from 15-20 to 1-5 sessions out);\n{', '.join(weak)} build little "
-                 "and mostly just converge at expiry  (all cycles)", y=1.02, fontsize=12.5, fontweight="semibold")
+    fig.suptitle("By ticker, extreme hard-to-borrow cycles (b12 >= 15%): the spread builds into the final "
+                 "week, peaks 1-4 sessions out\nand falls back at expiry; KPITTECH is the exception "
+                 "(smaller, peaks ~6 sessions out)", y=1.02, fontsize=12.5, fontweight="semibold")
     fig.tight_layout()
     return P.save(fig, "17_roll_profile_by_ticker")
 

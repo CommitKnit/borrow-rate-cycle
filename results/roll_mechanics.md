@@ -46,7 +46,7 @@ Of the give-back from the peak to the expiry close, a median **44%** happens aft
 | MOD | 28 | 66 | 3.14 | 4 | 2 |
 | NON | 13 | 36 | 16.35 | 9 | 2 |
 
-## 5. Median profile, last 15 sessions
+## 5. Median profile of hard-to-borrow cycles (MOD + EXT), last 15 sessions
 
 | sessions left | spread (bps) | normalised | F1 share of OI | F1/F2 ratio |
 |---|---|---|---|---|
@@ -66,3 +66,17 @@ Of the give-back from the peak to the expiry close, a median **44%** happens aft
 | 2 | 84 | 0.45 | 43% | 0.76 |
 | 1 | 84 | 0.48 | 25% | 0.33 |
 | 0 | -9 | -0.03 | 12% | 0.14 |
+
+## 6. By ticker, extreme cycles only (EXT, b12 ≥ 15%)
+
+Median spread (bps) by sessions to expiry. Restricting to EXT keeps a name's no-premium cycles from diluting its profile. Peaks are in sessions to expiry.
+
+| ticker | EXT cycles | 10 | 6 | 4 | 3 | 2 | 1 | 0 | peak of median profile | median per-cycle peak |
+|---|---|---|---|---|---|---|---|---|---|---|
+| SBICARD | 17 | 85 | 114 | 122 | 119 | 135 | 106 | 81 | 2 | 2 |
+| RVNL | 12 | 202 | 217 | 222 | 217 | 284 | 306 | 211 | 1 | 1 |
+| KPITTECH | 11 | 20 | 51 | 43 | 20 | 11 | 28 | -49 | 6 | 4 |
+| ASTRAL | 11 | 66 | 74 | 66 | 59 | 124 | 114 | 35 | 2 | 2 |
+| BDL | 9 | 73 | 99 | 102 | 110 | 123 | 220 | -53 | 1 | 1 |
+| IREDA | 19 | 97 | 145 | 186 | 226 | 253 | 228 | 63 | 2 | 1 |
+| VOLTAS | 13 | 73 | 91 | 108 | 105 | 81 | 72 | 61 | 4 | 1 |
