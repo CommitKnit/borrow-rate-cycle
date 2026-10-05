@@ -14,7 +14,7 @@ cycle_id`). The helpers live in `borrowcycle/roll.py`.
 ## Outputs
 | File | Content |
 |---|---|
-| `results/roll_sessions.csv` | one row per cycle-session (end of day): sessions to expiry, spread (bps and normalised), F1 share of OI, F1/F2 ratio, tier |
+| `results/roll_sessions.csv` | one row per cycle-session (end of day): sessions to expiry, spread (bps and normalised), F1 share of OI, F1/F2 ratio, spot − F1 and spot − F2 (bps of spot), b1/b2/b12 (%), tier |
 | `results/roll_cycles.csv` | one row per cycle: OI ratio and session at the spread peak, roll midpoint, spread left at each ratio milestone |
 | `results/roll_profile_by_session.csv` | median and IQR per session to expiry: all cycles, hard-to-borrow vs not, by tier, by ticker |
 | `results/spread_by_oi_ratio.csv` | spread by F1/F2 OI-ratio bin, same groupings |

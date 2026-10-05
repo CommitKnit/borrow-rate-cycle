@@ -113,7 +113,8 @@ def main() -> int:
     S.to_csv(RESULTS / "roll_sessions.csv")
     C.to_csv(RESULTS / "roll_cycles.csv", index=False)
 
-    cols = ["spread_bps", "spread_norm", "oi_share_f1", "oi_ratio"]
+    cols = ["spread_bps", "spread_norm", "oi_share_f1", "oi_ratio",
+            "spot_f1_bps", "spot_f2_bps", "b1_pct", "b2_pct", "b12_pct"]
     win = S[S["sessions_left"].between(0, MAX_SESSIONS)]
     prof = profile(win, "sessions_left", cols, ["all", "htb", "tier", "ticker", "ticker_ext"])
     prof.to_csv(RESULTS / "roll_profile_by_session.csv", index=False)
@@ -209,6 +210,29 @@ def main() -> int:
         cyc_peak = C.loc[(C.ticker == t) & (C.tier == "EXT"), "peak_sessions_left"]
         L.append(f"| {t} | {len(cyc_peak)} | " + " | ".join(f"{d.get(s, np.nan):.0f}" for s in show)
                  + f" | {last10.idxmax():.0f} | {cyc_peak.median():.0f} |")
+
+    L.append("\n## 7. Where the borrow sits: spot vs F1, then F1 vs F2\n")
+    L.append("Median end-of-session values. spot − F1 and spot − F2 in bps of spot (positive = the future "
+             "trades below spot); b1, b2, b12 annualised in % (r = 6.25%). Near expiry τ1 → 0 and b1 is "
+             "floored at 0, so read it only well before expiry.\n")
+    show = [20, 15, 10, 6, 4, 3, 2, 1, 0]
+    rows = [("spot − F1 (bps)", "spot_f1_bps", "{:.0f}"), ("spot − F2 (bps)", "spot_f2_bps", "{:.0f}"),
+            ("F1 − F2 (bps of F1)", "spread_bps", "{:.0f}"), ("b1 (%)", "b1_pct", "{:.1f}"),
+            ("b2 (%)", "b2_pct", "{:.1f}"), ("b12 (%)", "b12_pct", "{:.1f}")]
+    for title, sub in (("Extreme cycles (EXT)", win[win["tier"] == "EXT"]),
+                       ("Moderate cycles (MOD)", win[win["tier"] == "MOD"]),
+                       ("No borrow premium (NON, control)", win[win["tier"] == "NON"])):
+        m = sub.groupby("sessions_left")[[c for _, c, _ in rows]].median()
+        L.append(f"**{title}**\n")
+        L.append("| sessions to expiry | " + " | ".join(str(s) for s in show) + " |")
+        L.append("|---|" + "---|" * len(show))
+        for lab, c, f in rows:
+            L.append(f"| {lab} | " + " | ".join(f.format(m.loc[s, c]) if s in m.index and np.isfinite(m.loc[s, c])
+                                                  else "–" for s in show) + " |")
+        L.append("")
+    e = win[(win["tier"] == "EXT") & win["sessions_left"].between(5, 20)]["spot_f1_bps"]
+    L.append(f"Extreme cycles, 5–20 sessions out: spot is above F1 on {100 * (e > 0).mean():.0f}% of sessions; "
+             f"spot − F1 IQR {q(e, .25):.0f} to {q(e, .75):.0f} bps.\n")
     (RESULTS / "roll_mechanics.md").write_text("\n".join(L) + "\n", encoding="utf-8")
 
     print(f"{len(C)} cycles | spread peaks in the {peak_bin}x bin | OI ratio at peak "

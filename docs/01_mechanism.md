@@ -1,6 +1,6 @@
 # The mechanism
 
-## Why a hard-to-borrow stock has a rich front-month future
+## Where the borrow shows up: first against spot, then between F1 and F2
 
 To short a stock outright you must borrow it. In India that happens through
 the **Securities Lending & Borrowing (SLB)** market, where lenders post
@@ -9,27 +9,63 @@ lendable inventory the stock becomes **hard to borrow (HTB)**: the fee rises,
 and above some level the borrow stops being worth arranging at all.
 
 Single-stock futures are the alternative. A short future gives the same
-exposure with no borrow, no recall risk and no fee — only margin. So when a
+exposure with no borrow, no recall risk and no fee, only margin. So when a
 name becomes hard to borrow, short-selling demand migrates into the futures.
 
-That demand is concentrated in the **front month (F1)**, because that is where
-the volume and open interest sit. The **next month (F2)** keeps trading near
-fair carry. Persistent selling pressure in F1 does not push F1 *down* relative
-to F2 — the cost of the scarce borrow is embedded in the futures basis, and F1
-trades **rich** to F2, since the front month is where the borrow scarcity
-binds.
-
-The annualised borrow rate implied between the two contracts follows from cost of
-carry, `F = S·exp((r − b)·τ)`:
+**The borrow fee acts as a continuous dividend.** Whoever holds the stock can lend
+it out and earn the fee `b`; a future forgoes that income, so it is priced net of
+it. Cost of carry with a borrow yield is
 
 ```
-b12 = r − ln(F2 / F1) / (τ2 − τ1)        r = 6.25%
+F = S·exp((r − b)·τ)
+```
+
+When `b` exceeds the funding rate `r`, the future trades **below** spot, and the
+longer the contract, the deeper the discount. Inverting gives the implied borrow
+rates:
+
+```
+b1  = r − ln(F1 / S)  / τ1                 r = 6.25%
+b12 = r − ln(F2 / F1) / (τ2 − τ1)
 ```
 
 where τ is each contract's time to expiry in years, computed from a fractional DTE
 that ticks down through the day: `F{n}_dte_star = (F{n}_dte + 1) − i/25` for the
 `i`-th 15-minute bar of the session (calendar days, /365). Rates are floored at 0.
-Against spot, `b1 = r − ln(F1/S)/τ1`.
+
+The premium then moves through two stages over each expiry cycle.
+
+**1. Early in the cycle, the borrow sits between spot and F1.** With weeks to go,
+the front month carries the borrow against spot. In extreme cycles (peak b12 ≥ 15%)
+spot trades a median 13–14 bps **above** F1 from 20 to 10 sessions out, and the
+implied `b1` is 8–9%, above `r`. In the no-premium control the opposite holds: F1
+sits 26–58 bps above spot, which is normal carry.
+
+**2. Into expiry, F1 converges to spot and the borrow moves to F1–F2.** As τ1
+shrinks, F1 can embed less and less of the borrow and converges to spot. Spot − F1
+falls to about 10 bps four sessions out and to 0 three sessions out. F2 still carries
+a month of borrow, and the shorts rolling out of F1 sell into it. So the F1 − F2
+spread widens through the roll, from 55 bps at 20 sessions out to 122 at 4 and 138
+at 1, and **b12 rises with it, from 13% to 23%**. At settlement F1 *is* spot, F2
+becomes the new front month, and the premium resets (see the next section).
+
+Median values in extreme cycles (from [`results/roll_mechanics.md`](../results/roll_mechanics.md) §7):
+
+| sessions to expiry | 20 | 10 | 6 | 4 | 3 | 2 | 1 |
+|---|---|---|---|---|---|---|---|
+| spot − F1 (bps of spot) | 14 | 14 | 9 | 10 | 0 | −11 | −11 |
+| F1 − F2 (bps of F1) | 55 | 82 | 114 | 122 | 124 | 128 | 138 |
+| b1 (%) | 8.1 | 9.2 | 10.5 | 12.6 | 6.2 | – | – |
+| b12 (%) | 13.2 | 15.4 | 20.0 | 20.8 | 20.4 | 21.7 | 22.6 |
+
+Inside the last three sessions τ1 is close to zero, so `b1` is dominated by noise
+and floored at 0. It is left blank there.
+
+**Caveats.** The spot leg is a median and noisy cycle by cycle. In extreme cycles
+spot is above F1 on 55% of sessions 5–20 out (spot − F1 interquartile range −18 to
++69 bps), and the share ranges from 37% (ASTRAL) to 84% (RVNL). Moderate cycles
+(peak b12 5–15%) show neither stage clearly: they sit close to normal carry for most
+of the cycle, with F1 above spot and a median b12 of 2–6%.
 
 ## Why it has to collapse
 

@@ -65,7 +65,17 @@ def session_frame(cyc: pd.DataFrame) -> pd.DataFrame:
     eod["oi_share_f1"] = (f1 / (f1 + f2)).where(ok)
     eod["oi_ratio"] = (f1 / f2).where(ok)
     eod["sessions_left"] = sessions_to_expiry(eod.index, f1_expiry_date(cyc))
-    return eod[["sessions_left", "F1_dte", "spread_bps", "oi_share_f1", "oi_ratio"]]
+    cols = ["sessions_left", "F1_dte", "spread_bps", "oi_share_f1", "oi_ratio"]
+    if "SPOT_close" in eod.columns:      # where the borrow sits: spot vs F1 vs F2, in bps of spot
+        s = eod["SPOT_close"].astype(float)
+        eod["spot_f1_bps"] = (s - eod["F1_close"]) / s * 1e4
+        eod["spot_f2_bps"] = (s - eod["F2_close"]) / s * 1e4
+        cols += ["spot_f1_bps", "spot_f2_bps"]
+    for b in ("b1", "b2", "b12"):        # annualised implied borrow, in %
+        if b in eod.columns:
+            eod[f"{b}_pct"] = eod[b].astype(float) * 100
+            cols.append(f"{b}_pct")
+    return eod[cols]
 
 
 def first_below(sess: pd.DataFrame, level: float):
