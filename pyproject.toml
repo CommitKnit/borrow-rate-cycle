@@ -15,7 +15,17 @@ dependencies = [
     "scipy>=1.10",
     "pyarrow>=14.0",
     "matplotlib>=3.7",
+    "arcticdb>=4.0",
+    "requests>=2.31",
+    "kiteconnect>=5.0",
 ]
 
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
 [tool.setuptools]
-packages = ["borrowcycle"]
+packages = ["borrowcycle", "borrowcycle.pipeline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]
